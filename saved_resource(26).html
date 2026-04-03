@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)https://web-sandbox.oaiusercontent.com/? -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>MR PAPRIKA SECURE 🍕</title>
+
+<style>
+body { font-family: Arial; background:#020617; color:white; text-align:center; }
+.card { background:#0f172a; padding:15px; margin:15px; border-radius:15px; }
+button { padding:10px; margin:5px; background:#f97316; border:none; color:white; }
+input { padding:8px; margin:5px; width:80%; }
+.admin { background:#111827; }
+.hidden { display:none; }
+a { color:#38bdf8; display:block; margin:5px; }
+</style>
+<style>html,body,#root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;margin:0;padding:0}html,body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif!important}button,input,textarea,select{font-family:inherit}html{background-color:#fff}html.dark{background-color:#212121}html.mobileSkybridge.dark{background-color:#000}@supports (font: -apple-system-body){html.mobileSkybridge{font:-apple-system-body}}html.desktopSkybridge.dark{background-color:#1e1e1e}</style></head>
+
+<body>
+
+<h1>🍕 MR PAPRIKA SECURE</h1>
+
+<button onclick="openLogin()">🔐 Admin</button>
+<button onclick="logout()">🚪 Logout</button>
+
+<!-- CONTACT PUBLIC -->
+<div class="card">
+<h2>📞 Contact &amp; Réseaux</h2>
+<p id="phone"></p>
+<p id="location"></p>
+<div id="socials"></div>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="card admin hidden">
+
+<h2>👑 Configuration Propriétaire</h2>
+
+<h3>📱 Numéro</h3>
+<input id="admin-phone">
+<button onclick="savePhone()">Enregistrer</button>
+
+<h3>🌍 Localisation</h3>
+<input id="admin-location">
+<button onclick="saveLocation()">Enregistrer</button>
+
+<h3>🔗 Réseaux</h3>
+<input id="social-name" placeholder="Nom">
+<input id="social-link" placeholder="Lien">
+<button onclick="addSocial()">Ajouter</button>
+
+<div id="admin-socials"></div>
+
+</div>
+
+<script>
+// ================= CONFIG =================
+const ADMIN_PASSWORD = "1234"; // 🔥 change ça
+
+// ================= DB =================
+let DB = JSON.parse(localStorage.getItem("DB")) || {
+    contact:{ phone:"", location:"", socials:[] }
+};
+
+let isAdmin = false;
+
+function save(){ localStorage.setItem("DB",JSON.stringify(DB)); }
+
+// ================= SECURITY =================
+function openLogin(){
+    const pass = prompt("Mot de passe admin:");
+    if(pass === ADMIN_PASSWORD){
+        isAdmin = true;
+        document.getElementById("admin").classList.remove("hidden");
+        alert("Accès autorisé");
+    } else {
+        alert("Accès refusé");
+    }
+}
+
+function logout(){
+    isAdmin = false;
+    document.getElementById("admin").classList.add("hidden");
+}
+
+// protection fonction
+function protect(){
+    if(!isAdmin){
+        alert("🔐 Accès refusé");
+        return false;
+    }
+    return true;
+}
+
+// ================= CONTACT =================
+function savePhone(){
+    if(!protect()) return;
+    DB.contact.phone = document.getElementById("admin-phone").value;
+    save();
+    renderContact();
+}
+
+function saveLocation(){
+    if(!protect()) return;
+    DB.contact.location = document.getElementById("admin-location").value;
+    save();
+    renderContact();
+}
+
+function addSocial(){
+    if(!protect()) return;
+
+    const name = document.getElementById("social-name").value;
+    const link = document.getElementById("social-link").value;
+
+    DB.contact.socials.push({name,link});
+    save();
+    renderContact();
+    renderAdminSocials();
+}
+
+function deleteSocial(i){
+    if(!protect()) return;
+
+    DB.contact.socials.splice(i,1);
+    save();
+    renderContact();
+    renderAdminSocials();
+}
+
+// ================= RENDER =================
+function renderContact(){
+
+    document.getElementById("phone").innerHTML =
+        DB.contact.phone ? "📱 "+DB.contact.phone : "";
+
+    document.getElementById("location").innerHTML =
+        DB.contact.location ? `<a href="${DB.contact.location}" target="_blank">📍 Localisation</a>` : "";
+
+    const socials = document.getElementById("socials");
+    socials.innerHTML="";
+
+    DB.contact.socials.forEach(s=>{
+        socials.innerHTML+=`<a href="${s.link}" target="_blank">${s.name}</a>`;
+    });
+}
+
+function renderAdminSocials(){
+    const el=document.getElementById("admin-socials");
+    el.innerHTML="";
+
+    DB.contact.socials.forEach((s,i)=>{
+        el.innerHTML+=`
+        <p>${s.name}
+        <button onclick="deleteSocial(${i})">❌</button></p>`;
+    });
+}
+
+// ================= INIT =================
+function init(){
+    renderContact();
+    renderAdminSocials();
+}
+
+document.addEventListener("DOMContentLoaded",init);
+
+</script>
+
+
+</body></html>

@@ -1,0 +1,61 @@
+
+<!-- saved from url=(0040)https://web-sandbox.oaiusercontent.com/? -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><style>html,body,#root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;margin:0;padding:0}html,body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif!important}button,input,textarea,select{font-family:inherit}html{background-color:#fff}html.dark{background-color:#212121}html.mobileSkybridge.dark{background-color:#000}@supports (font: -apple-system-body){html.mobileSkybridge{font:-apple-system-body}}html.desktopSkybridge.dark{background-color:#1e1e1e}</style></head><body><section class="owner-panel container" id="owner-panel">
+  <h3>🔑 Espace Propriétaire</h3>
+  
+  <h4>Coordonnées</h4>
+  <input type="text" id="owner-name" placeholder="Nom du propriétaire">
+  <input type="email" id="owner-email" placeholder="Email">
+  <input type="tel" id="owner-phone" placeholder="Téléphone">
+  <input type="text" id="owner-address" placeholder="Adresse">
+  <input type="url" id="owner-whatsapp" placeholder="Lien WhatsApp">
+  <input type="url" id="owner-instagram" placeholder="Lien Instagram">
+  <input type="url" id="owner-facebook" placeholder="Lien Facebook">
+  <button id="save-owner">💾 Sauvegarder</button>
+  <p id="owner-status"></p>
+
+  <h4>Images des Pizzas</h4>
+  <form id="pizza-images-form">
+    <div id="owner-pizza-images"></div>
+    <button type="submit">💾 Sauvegarder les images</button>
+  </form>
+  <p id="pizza-images-status"></p>
+</section>
+
+<script>
+// ===================== GESTION IMAGES PIZZAS =====================
+const ownerPizzaContainer = document.getElementById('owner-pizza-images');
+
+function renderOwnerPizzaImages() {
+  ownerPizzaContainer.innerHTML = '';
+  PIZZAS.forEach(pizza => {
+    const savedImg = localStorage.getItem(`pizza-img-${pizza.id}`) || pizza.img;
+    pizza.img = savedImg;
+    const div = document.createElement('div');
+    div.style.marginBottom = '15px';
+    div.innerHTML = `
+      <label>${pizza.name} - URL de l'image :</label>
+      <input type="url" data-pizza-id="${pizza.id}" value="${savedImg}" style="width:100%;padding:8px;margin-top:5px;border-radius:5px;border:none;">
+    `;
+    ownerPizzaContainer.appendChild(div);
+  });
+}
+renderOwnerPizzaImages();
+
+const pizzaImagesForm = document.getElementById('pizza-images-form');
+pizzaImagesForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const inputs = ownerPizzaContainer.querySelectorAll('input');
+  inputs.forEach(input => {
+    const id = input.dataset.pizzaId;
+    const url = input.value.trim();
+    if(url) {
+      localStorage.setItem(`pizza-img-${id}`, url);
+      const pizzaObj = PIZZAS.find(p=>p.id===id);
+      pizzaObj.img = url;
+    }
+  });
+  renderPizzas(); // met à jour le menu
+  document.getElementById('pizza-images-status').textContent = '✅ Images mises à jour !';
+});
+</script></body></html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)https://web-sandbox.oaiusercontent.com/? -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>MR PAPRIKA ADMIN 🍕</title>
+
+<style>
+body { font-family: Arial; background:#020617; color:white; text-align:center; }
+.card { background:#0f172a; padding:15px; margin:15px; border-radius:15px; }
+button { padding:10px; margin:5px; background:#f97316; border:none; color:white; }
+input { padding:8px; margin:5px; }
+.admin { background:#111827; }
+.hidden { display:none; }
+</style>
+<style>html,body,#root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;margin:0;padding:0}html,body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif!important}button,input,textarea,select{font-family:inherit}html{background-color:#fff}html.dark{background-color:#212121}html.mobileSkybridge.dark{background-color:#000}@supports (font: -apple-system-body){html.mobileSkybridge{font:-apple-system-body}}html.desktopSkybridge.dark{background-color:#1e1e1e}</style></head>
+
+<body>
+
+<h1>🍕 MR PAPRIKA PRO + ADMIN</h1>
+
+<button onclick="toggleAdmin()">👑 Mode Admin</button>
+
+<!-- MENU -->
+<div class="card">
+<h2>Menu</h2>
+<div id="menu">
+        <div>
+        Margherita - 3000
+        <button onclick="addCart(0)">Ajouter</button>
+        <button onclick="deletePizza(0)">❌</button>
+        </div>
+        <div>
+        Pepperoni - 5000
+        <button onclick="addCart(1)">Ajouter</button>
+        <button onclick="deletePizza(1)">❌</button>
+        </div></div>
+</div>
+
+<!-- PANIER -->
+<div class="card">
+<h2>Panier</h2>
+<ul id="cart"><p>Total: 0 FCFA</p></ul>
+<button onclick="checkout()">💳 Payer</button>
+</div>
+
+<!-- CHAT -->
+<div class="card">
+<h2>🤖 IA</h2>
+<div id="chat" style="height:150px;overflow:auto;"></div>
+<input id="msg"><button onclick="send()">Envoyer</button>
+</div>
+
+<!-- ADMIN PANEL -->
+<div id="admin" class="card admin">
+<h2>👑 Dashboard Propriétaire</h2>
+
+<h3>➕ Ajouter pizza</h3>
+<input id="newName" placeholder="Nom">
+<input id="newPrice" placeholder="Prix">
+<button onclick="addPizza()">Ajouter</button>
+
+<h3>📊 Stats</h3>
+<p id="stats">Commandes: 0 | Revenus: 0</p>
+
+<h3>🔥 Promo</h3>
+<button onclick="activatePromo()">Activer Promo</button>
+
+<h3>📦 Commandes</h3>
+<div id="orders"></div>
+
+</div>
+
+<script>
+// ================= DATABASE =================
+let DB = JSON.parse(localStorage.getItem("DB")) || {
+    menu:[
+        {name:"Margherita",price:3000},
+        {name:"Pepperoni",price:5000}
+    ],
+    cart:[],
+    orders:[],
+    chat:[],
+    promo:false
+};
+
+function save(){ localStorage.setItem("DB",JSON.stringify(DB)); }
+
+// ================= MENU =================
+function renderMenu(){
+    const el=document.getElementById("menu");
+    el.innerHTML="";
+
+    DB.menu.forEach((p,i)=>{
+        el.innerHTML+=`
+        <div>
+        ${p.name} - ${p.price}
+        <button onclick="addCart(${i})">Ajouter</button>
+        ${adminMode ? `<button onclick="deletePizza(${i})">❌</button>` : ""}
+        </div>`;
+    });
+}
+
+function addPizza(){
+    const name=document.getElementById("newName").value;
+    const price=parseInt(document.getElementById("newPrice").value);
+
+    if(!name || !price) return alert("Erreur");
+
+    DB.menu.push({name,price});
+    save();
+    renderMenu();
+}
+
+function deletePizza(i){
+    DB.menu.splice(i,1);
+    save();
+    renderMenu();
+}
+
+// ================= PANIER =================
+function addCart(i){
+    DB.cart.push(DB.menu[i]);
+    save();
+    renderCart();
+}
+
+function renderCart(){
+    const el=document.getElementById("cart");
+    el.innerHTML="";
+    let total=0;
+
+    DB.cart.forEach((p,i)=>{
+        total+=p.price;
+        el.innerHTML+=`
+        <li>${p.name} ${p.price}
+        <button onclick="removeItem(${i})">❌</button></li>`;
+    });
+
+    if(DB.promo) total*=0.9;
+
+    el.innerHTML+=`<p>Total: ${Math.floor(total)} FCFA</p>`;
+}
+
+function removeItem(i){
+    DB.cart.splice(i,1);
+    save();
+    renderCart();
+}
+
+// ================= IA =================
+function ai(msg){
+    msg=msg.toLowerCase();
+
+    if(msg.includes("promo") && DB.promo){
+        return "🔥 Promo active -10% !";
+    }
+
+    if(msg.includes("recommande")){
+        return DB.menu[Math.floor(Math.random()*DB.menu.length)].name;
+    }
+
+    return "🤖 Je peux te conseiller";
+}
+
+function send(){
+    const input=document.getElementById("msg");
+    const m=input.value;
+
+    const r=ai(m);
+
+    DB.chat.push({m,r});
+    save();
+
+    renderChat();
+    input.value="";
+}
+
+function renderChat(){
+    const el=document.getElementById("chat");
+    el.innerHTML="";
+
+    DB.chat.forEach(c=>{
+        el.innerHTML+=`<p>👤 ${c.m}</p><p>🤖 ${c.r}</p>`;
+    });
+}
+
+// ================= PAIEMENT =================
+function checkout(){
+    if(!DB.cart.length) return alert("Panier vide");
+
+    DB.orders.push([...DB.cart]);
+    DB.cart=[];
+    save();
+
+    renderCart();
+    renderOrders();
+    updateStats();
+
+    alert("Paiement validé");
+}
+
+// ================= ADMIN =================
+let adminMode=false;
+
+function toggleAdmin(){
+    adminMode=!adminMode;
+    document.getElementById("admin").classList.toggle("hidden");
+    renderMenu();
+}
+
+function activatePromo(){
+    DB.promo=!DB.promo;
+    save();
+    renderCart();
+    alert("Promo activée !");
+}
+
+function renderOrders(){
+    const el=document.getElementById("orders");
+    el.innerHTML="";
+
+    DB.orders.forEach((o,i)=>{
+        el.innerHTML+=`<p>Commande ${i+1}: ${o.map(p=>p.name).join(", ")}</p>`;
+    });
+}
+
+function updateStats(){
+    const total=DB.orders.flat().reduce((s,i)=>s+i.price,0);
+    document.getElementById("stats").innerText=
+        `Commandes: ${DB.orders.length} | Revenus: ${total}`;
+}
+
+// ================= INIT =================
+function init(){
+    renderMenu();
+    renderCart();
+    renderChat();
+    renderOrders();
+    updateStats();
+}
+
+document.addEventListener("DOMContentLoaded",init);
+
+</script>
+
+
+</body></html>

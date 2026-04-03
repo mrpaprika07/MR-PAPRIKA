@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)https://web-sandbox.oaiusercontent.com/? -->
+<html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>MR PAPRIKA PRO MAX 🍕</title>
+
+<style>
+body { font-family: Arial; background:#020617; color:white; text-align:center; }
+.card { background:#0f172a; padding:15px; margin:15px; border-radius:15px; }
+button { padding:10px; margin:5px; background:#f97316; border:none; color:white; }
+input { padding:8px; margin:5px; width:80%; }
+.admin { background:#111827; }
+.hidden { display:none; }
+a { color:#38bdf8; display:block; margin:5px; }
+</style>
+<style>html,body,#root{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;margin:0;padding:0}html,body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif!important}button,input,textarea,select{font-family:inherit}html{background-color:#fff}html.dark{background-color:#212121}html.mobileSkybridge.dark{background-color:#000}@supports (font: -apple-system-body){html.mobileSkybridge{font:-apple-system-body}}html.desktopSkybridge.dark{background-color:#1e1e1e}</style></head>
+
+<body>
+
+<h1>🍕 MR PAPRIKA PRO MAX</h1>
+<button onclick="toggleAdmin()">👑 Mode Admin</button>
+
+<!-- CONTACT PUBLIC -->
+<div class="card">
+<h2>📞 Contact &amp; Réseaux</h2>
+<p id="phone"></p>
+<p id="location"></p>
+<div id="socials"></div>
+</div>
+
+<!-- MENU -->
+<div class="card">
+<h2>Menu</h2>
+<div id="menu">
+        <div>
+        Margherita - 3000
+        <button onclick="addCart(0)">Ajouter</button>
+        </div>
+        <div>
+        Pepperoni - 5000
+        <button onclick="addCart(1)">Ajouter</button>
+        </div></div>
+</div>
+
+<!-- PANIER -->
+<div class="card">
+<h2>Panier</h2>
+<ul id="cart"><p>Total: 0 FCFA</p></ul>
+<button onclick="checkout()">💳 Payer</button>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="card admin hidden">
+
+<h2>👑 Configuration Propriétaire</h2>
+
+<h3>📱 Numéro</h3>
+<input id="admin-phone" placeholder="Ex: +2250700000000">
+<button onclick="savePhone()">Enregistrer</button>
+
+<h3>🌍 Localisation (Google Maps lien)</h3>
+<input id="admin-location" placeholder="https://maps.google.com/...">
+<button onclick="saveLocation()">Enregistrer</button>
+
+<h3>🔗 Réseaux sociaux</h3>
+<input id="social-name" placeholder="Nom (Facebook)">
+<input id="social-link" placeholder="Lien">
+<button onclick="addSocial()">Ajouter réseau</button>
+
+<div id="admin-socials"></div>
+
+</div>
+
+<script>
+// ================= DATABASE =================
+let DB = JSON.parse(localStorage.getItem("DB")) || {
+    menu:[
+        {name:"Margherita",price:3000},
+        {name:"Pepperoni",price:5000}
+    ],
+    cart:[],
+    orders:[],
+    contact:{
+        phone:"",
+        location:"",
+        socials:[]
+    }
+};
+
+function save(){ localStorage.setItem("DB",JSON.stringify(DB)); }
+
+// ================= CONTACT =================
+function savePhone(){
+    DB.contact.phone = document.getElementById("admin-phone").value;
+    save();
+    renderContact();
+}
+
+function saveLocation(){
+    DB.contact.location = document.getElementById("admin-location").value;
+    save();
+    renderContact();
+}
+
+function addSocial(){
+    const name = document.getElementById("social-name").value;
+    const link = document.getElementById("social-link").value;
+
+    if(!name || !link) return;
+
+    DB.contact.socials.push({name,link});
+    save();
+    renderContact();
+    renderAdminSocials();
+}
+
+function renderContact(){
+    document.getElementById("phone").innerHTML =
+        DB.contact.phone ? "📱 "+DB.contact.phone : "";
+
+    document.getElementById("location").innerHTML =
+        DB.contact.location ? `<a href="${DB.contact.location}" target="_blank">📍 Voir localisation</a>` : "";
+
+    const socials = document.getElementById("socials");
+    socials.innerHTML="";
+
+    DB.contact.socials.forEach(s=>{
+        socials.innerHTML += `<a href="${s.link}" target="_blank">${s.name}</a>`;
+    });
+}
+
+function renderAdminSocials(){
+    const el = document.getElementById("admin-socials");
+    el.innerHTML="";
+
+    DB.contact.socials.forEach((s,i)=>{
+        el.innerHTML+=`
+        <p>${s.name}
+        <button onclick="deleteSocial(${i})">❌</button></p>`;
+    });
+}
+
+function deleteSocial(i){
+    DB.contact.socials.splice(i,1);
+    save();
+    renderContact();
+    renderAdminSocials();
+}
+
+// ================= MENU =================
+function renderMenu(){
+    const el=document.getElementById("menu");
+    el.innerHTML="";
+
+    DB.menu.forEach((p,i)=>{
+        el.innerHTML+=`
+        <div>
+        ${p.name} - ${p.price}
+        <button onclick="addCart(${i})">Ajouter</button>
+        </div>`;
+    });
+}
+
+// ================= PANIER =================
+function addCart(i){
+    DB.cart.push(DB.menu[i]);
+    save();
+    renderCart();
+}
+
+function renderCart(){
+    const el=document.getElementById("cart");
+    el.innerHTML="";
+    let total=0;
+
+    DB.cart.forEach((p,i)=>{
+        total+=p.price;
+        el.innerHTML+=`
+        <li>${p.name} ${p.price}
+        <button onclick="removeItem(${i})">❌</button></li>`;
+    });
+
+    el.innerHTML+=`<p>Total: ${total} FCFA</p>`;
+}
+
+function removeItem(i){
+    DB.cart.splice(i,1);
+    save();
+    renderCart();
+}
+
+// ================= PAIEMENT =================
+function checkout(){
+    if(!DB.cart.length) return alert("Panier vide");
+
+    DB.orders.push([...DB.cart]);
+    DB.cart=[];
+    save();
+
+    renderCart();
+    alert("Commande validée !");
+}
+
+// ================= ADMIN =================
+let adminMode=false;
+
+function toggleAdmin(){
+    adminMode=!adminMode;
+    document.getElementById("admin").classList.toggle("hidden");
+}
+
+// ================= INIT =================
+function init(){
+    renderMenu();
+    renderCart();
+    renderContact();
+    renderAdminSocials();
+}
+
+document.addEventListener("DOMContentLoaded",init);
+
+</script>
+
+
+</body></html>
